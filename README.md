@@ -1,5 +1,7 @@
 # Photo Filters package for flutter
 
+# IsMoiL Sheraliev Курсовая работа Разработка приложения «Обработка изображения фильтрами»
+
 A flutter package for iOS and Android for applying filter to an image. A set of preset filters are also available. You can create your own filters too.
 
 ## Installation
