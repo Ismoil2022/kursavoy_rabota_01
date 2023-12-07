@@ -1,3 +1,216 @@
+Пакет фотофильтров для флаттера
+ИсМоиЛ Шералиев Курсовая работа Разработка приложения «Обработка изображения фильтрами»
+Пакет flutter для iOS и Android для применения фильтра к изображению. Также доступен набор предустановленных фильтров. Вы также можете создавать свои собственные фильтры.
+
+Монтаж
+Сначала добавьте photofiltersи imageв качестве зависимости в файл pubspec.yaml .
+
+iOS
+Никакой настройки не требуется — плагин должен работать «из коробки».
+
+Андроид
+Никакой настройки не требуется — плагин должен работать «из коробки».
+
+Пример
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+import 'package:photofilters/photofilters.dart';
+import 'package:image/image.dart' as imagelib;
+import 'package:image_picker/image_picker.dart';
+
+void main() => runApp(const MaterialApp(
+  debugShowCheckedModeBanner: false,
+    home: MyApp()));
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  MyAppState createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> {
+  String fileName = "";
+  List<Filter> filters = presetFiltersList;
+  final picker = ImagePicker();
+  File? imageFile;
+
+  Future getImage(context) async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      imageFile = File(pickedFile.path);
+      fileName = basename(imageFile!.path);
+      var image = imagelib.decodeImage(await imageFile!.readAsBytes());
+      image = imagelib.copyResize(image!, width: 600);
+      Map imagefile = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PhotoFilterSelector(
+            title: const Text("Пример фотофильтра"),
+            image: image!,
+            filters: presetFiltersList,
+            filename: fileName,
+            loader: const Center(child: CircularProgressIndicator()),
+            fit: BoxFit.contain,
+          ),
+        ),
+      );
+
+      if (imagefile.containsKey('image_filtered')) {
+        setState(() {
+          imageFile = imagefile['image_filtered'];
+        });
+        debugPrint(imageFile!.path);
+      }
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Обработка изображения фильтрами'),
+      ),
+      body: Column(
+        children: [
+          Container(
+              padding: EdgeInsets.all(30),
+              child: Center(
+                child: Text(
+                    "IsMoiL Sheraliev \n Разработка приложения \n «Обработка изображения фильтрами» \n Курсавой работа" ,style:
+                TextStyle(color:Colors.teal,fontSize: 18, fontStyle: FontStyle.normal ),
+                ),
+              )
+          ),
+          SizedBox(width: 23, height: 100,),
+          Center(
+            child: Container(
+              child: imageFile == null
+                  ? const Center(
+                child: Text('Изображение не выбрано.'),
+              )
+                  : Image.file(File(imageFile!.path)),
+
+            ),
+          ),
+
+        ],
+
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => getImage(context),
+        tooltip: 'Выберите изображение',
+        child: const Icon(Icons.add_a_photo),
+      ),
+    );
+  }
+}
+Снимки экрана пользовательского интерфейса
+
+
+Примеры изображений фильтров
+Нет фильтра Нет фильтра	ЗахватывающийСиний ЗахватывающийСиний	ЗахватывающийКрасный ЗахватывающийКрасный	Аден Аден
+Амаро Амаро	Эшби Эшби	Браннан Браннан	Бруклин Бруклин
+Подвески Подвески	Кларендон Кларендон	Крема Крема	Патч Патч
+Ранняя пташка Ранняя пташка	1977 год 1977 год	Зонтик Зонтик	Гиндза Гиндза
+Хефе Хефе	Елена Елена	Хадсон Хадсон	Чернильница Чернильница
+Юнона Юнона	Кельвин Кельвин	Жаворонок Жаворонок	Лоу-фай Лоу-фай
+Людвиг Людвиг	Мавен Мавен	Мейфэр Мейфэр	Луна Луна
+Нэшвилл Нэшвилл	Перпетуя Перпетуя	Рейес Рейес	Рост Рост
+Сьерра Сьерра	Горизонт Горизонт	сон сон	Стинсон Стинсон
+Сутро Сутро	Тостер Тостер	Валенсия Валенсия	Вечерня Вечерня
+Уолден Уолден	Ива Ива	Икс-Про II Икс-Про II	
+Примеры изображений фильтров свертки
+Личность Личность	Тиснение Тиснение	Заточка Заточка	Обнаружение цветных краев Обнаружение цветных краев
+Размытие Размытие	Средство обнаружения краев Средство обнаружения краев	Обнаружение края жесткое Обнаружение края жесткое	Гуасовское размытие Гуасовское размытие
+НЧ НЧ	Высокая частота Высокая частота	Иметь в виду Иметь в виду	
+Фильтры
+Существует два типа фильтров. ImageFilterи ColorFilter.
+
+Фильтр изображений
+Фильтр изображений применяет свои подфильтры один за другим непосредственно ко всему изображению. Это требует больших вычислительных затрат, поскольку сложность и время увеличиваются по мере увеличения количества подфильтров.
+
+Вы можете создать свой собственный фильтр изображений следующим образом:
+
+    import 'package:photofilters/filters/image_filters.dart';
+
+    var customImageFilter = new ImageFilter(name: "Custom Image Filter");
+    customImageFilter.subFilters.add(ConvolutionSubFilter.fromKernel(
+      coloredEdgeDetectionKernel,
+    ));
+    customImageFilter.subFilters.add(ConvolutionSubFilter.fromKernel(
+      gaussian7x7Kernel,
+    ));
+    customImageFilter.subFilters.add(ConvolutionSubFilter.fromKernel(
+      sharpenKernel,
+    ));
+    customImageFilter.subFilters.add(ConvolutionSubFilter.fromKernel(
+      highPass3x3Kernel,
+    ));
+    customImageFilter.subFilters.add(ConvolutionSubFilter.fromKernel(
+      lowPass3x3Kernel,
+    ));
+    customImageFilter.subFilters.add(SaturationSubFilter(0.5));
+Вы также можете наследовать класс ImageFilter, чтобы создать еще один фильтр изображений.
+
+class MyImageFilter extends ImageFilter {
+  MyImageFilter(): super(name: "My Custom Image Filter") {
+    this.addSubFilter(ConvolutionSubFilter.fromKernel(sharpenKernel));
+  }
+}
+Цветовой фильтр
+Цветовой фильтр применяет свои подфильтры к каждому пикселю один за другим. В вычислительном отношении он требует меньше затрат, чем ImageFilter. Он будет перебирать пиксели изображения только один раз, независимо от количества подфильтров.
+
+Вы можете создать свой собственный цветовой фильтр следующим образом:
+
+    import 'package:photofilters/filters/color_filters.dart';
+
+    var customColorFilter = new ColorFilter(name: "Custom Color Filter");
+    customColorFilter.addSubFilter(SaturationSubFilter(0.5));
+    customColorFilter
+        .addSubFilters([BrightnessSubFilter(0.5), HueRotationSubFilter(30)]);
+Вы также можете наследовать класс ColorFilter.
+
+class MyColorFilter extends ColorFilter {
+  MyColorFilter() : super(name: "My Custom Color Filter") {
+    this.addSubFilter(BrightnessSubFilter(0.8));
+    this.addSubFilter(HueRotationSubFilter(30));
+  }
+}
+Подфильтры
+Существует два типа субфильтров. Один можно добавить в файл, ColorFilterа другой — в файл ImageFilter. Вы можете наследовать ColorSubFilterкласс для реализации первого и использовать ImageSubFilterпримесь для реализации второго. Вы можете создать один и тот же подфильтр, который можно использовать как для фильтров изображений, так и для цветных фильтров. Это BrightnessSubFilterпример этого.
+
+class BrightnessSubFilter extends ColorSubFilter with ImageSubFilter {
+  final num brightness;
+  BrightnessSubFilter(this.brightness);
+
+  ///Apply the [BrightnessSubFilter] to an Image.
+  @override
+  void apply(Uint8List pixels, int width, int height) =>
+      image_filter_utils.brightness(pixels, brightness);
+
+  ///Apply the [BrightnessSubFilter] to a color.
+  @override
+  RGBA applyFilter(RGBA color) =>
+      color_filter_utils.brightness(color, brightness);
+}
+Начиная
+Чтобы получить помощь по началу работы с Flutter, просмотрите нашу онлайн- документацию .
+
+Для получения помощи по редактированию кода пакета просмотрите документацию .
+
+
+
+
+
+#########
+
+
+
 # Photo Filters package for flutter
 
 # IsMoiL Sheraliev Курсовая работа Разработка приложения «Обработка изображения фильтрами»
@@ -250,3 +463,4 @@ class BrightnessSubFilter extends ColorSubFilter with ImageSubFilter {
 For help getting started with Flutter, view our online [documentation](https://flutter.io/).
 
 For help on editing package code, view the [documentation](https://flutter.io/developing-packages/).
+
